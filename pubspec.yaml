@@ -53,6 +53,7 @@ dependencies:
   http: ^1.6.0
   dart_rss: ^3.0.3
   timeago: ^3.7.1
+  youtube_player_iframe: ^5.2.2
 
 dev_dependencies:
   flutter_test:

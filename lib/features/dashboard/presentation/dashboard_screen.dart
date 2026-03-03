@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
+import 'learn_screen.dart';
+import 'alerts_screen.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -38,53 +40,64 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final theme = Theme.of(context);
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              _buildGreetingHeader(theme),
-              const SizedBox(height: 24),
-              _buildResilienceScoreCard(theme),
-              const SizedBox(height: 20),
-              _buildAlertBanner(theme),
-              const SizedBox(height: 28),
-              Text('Disaster Modules', style: theme.textTheme.titleLarge),
-              const SizedBox(height: 4),
-              Text(
-                'Choose a topic to focus on',
-                style: theme.textTheme.bodyMedium,
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          _buildHomeTab(theme),
+          const LearnScreen(),
+          const AlertsScreen(),
+          const Center(child: Text('Profile (Coming Soon)')),
+        ],
+      ),
+      floatingActionButton: _currentIndex == 0
+          ? FloatingActionButton.extended(
+              onPressed: () => context.push('/chat'),
+              backgroundColor: AppColors.indigo,
+              foregroundColor: Colors.white,
+              elevation: 4,
+              icon: const Icon(Icons.auto_awesome, size: 18),
+              label: Text(
+                'Ask AI',
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
               ),
-              const SizedBox(height: 16),
-              _buildModulesGrid(context, theme),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 64),
-        child: FloatingActionButton.extended(
-          onPressed: () => context.push('/chat'),
-          backgroundColor: AppColors.indigo,
-          foregroundColor: Colors.white,
-          elevation: 4,
-          icon: const Icon(Icons.auto_awesome, size: 20),
-          label: Text(
-            'Chat with AI',
-            style: GoogleFonts.plusJakartaSans(
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-            ),
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-      ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            )
+          : null,
       bottomNavigationBar: _buildBottomNav(theme),
+    );
+  }
+
+  Widget _buildHomeTab(ThemeData theme) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20),
+            _buildGreetingHeader(theme),
+            const SizedBox(height: 24),
+            _buildResilienceScoreCard(theme),
+            const SizedBox(height: 20),
+            _buildAlertBanner(theme),
+            const SizedBox(height: 28),
+            Text('Disaster Modules', style: theme.textTheme.titleLarge),
+            const SizedBox(height: 4),
+            Text(
+              'Choose a topic to focus on',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            _buildModulesGrid(context, theme),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
     );
   }
 
@@ -96,11 +109,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Good Morning 👋',
-                style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
-              ),
-              const SizedBox(height: 4),
               Text(
                 'Welcome, User',
                 style: GoogleFonts.plusJakartaSans(
@@ -198,15 +206,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 // Mini progress pills
                 Row(
                   children: List.generate(5, (i) {
-                    return Container(
-                      width: 32,
-                      height: 6,
-                      margin: const EdgeInsets.only(right: 4),
-                      decoration: BoxDecoration(
-                        color: i < 3
-                            ? Colors.white
-                            : Colors.white.withOpacity(0.25),
-                        borderRadius: BorderRadius.circular(3),
+                    return Expanded(
+                      child: Container(
+                        height: 6,
+                        margin: const EdgeInsets.only(right: 4),
+                        decoration: BoxDecoration(
+                          color: i < 3
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
                       ),
                     );
                   }),
@@ -419,11 +428,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _navItem(Icons.home_rounded, 'Home', 0),
-              _navItem(Icons.menu_book_rounded, 'Learn', 1),
+              Expanded(child: _navItem(Icons.home_rounded, 'Home', 0)),
+              Expanded(child: _navItem(Icons.menu_book_rounded, 'Learn', 1)),
               _buildSOSButton(),
-              _navItem(Icons.notifications_outlined, 'Alerts', 2),
-              _navItem(Icons.person_outline_rounded, 'Profile', 3),
+              Expanded(
+                child: _navItem(Icons.notifications_outlined, 'Alerts', 2),
+              ),
+              Expanded(
+                child: _navItem(Icons.person_outline_rounded, 'Profile', 3),
+              ),
             ],
           ),
         ),
@@ -679,14 +692,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return GestureDetector(
       onTap: () {
         setState(() => _currentIndex = index);
-        if (index == 2) {
-          context.push('/alerts');
-        }
       },
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
               ? selectedColor.withValues(alpha: 0.1)

@@ -14,7 +14,9 @@ class SurakshamApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
       title: 'Suraksham',
-      themeMode: ThemeMode.dark, // Defaulting to dark mode for the premium feel
+      debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.light,
+      theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       routerConfig: appRouter,
     );

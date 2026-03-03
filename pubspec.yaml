@@ -54,6 +54,7 @@ dependencies:
   dart_rss: ^3.0.3
   timeago: ^3.7.1
   youtube_player_iframe: ^5.2.2
+  geocoding: ^4.0.0
 
 dev_dependencies:
   flutter_test:

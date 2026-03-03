@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
+import '../data/risk_service.dart';
+import '../providers/location_risk_provider.dart';
 import 'learn_screen.dart';
 import 'alerts_screen.dart';
 
@@ -235,13 +237,69 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   // ── Alert Banner ──────────────────────────────────────────────────
   Widget _buildAlertBanner(ThemeData theme) {
+    final riskState = ref.watch(locationRiskProvider);
+
+    Color bgColor = AppColors.coral.withValues(alpha: 0.15);
+    Color borderColor = AppColors.coral.withValues(alpha: 0.3);
+    Color iconColor = const Color(0xFFE65100);
+    IconData iconData = Icons.warning_amber_rounded;
+    String titleText = 'Location Risk Level';
+    String subtitleText = 'Fetching local data...';
+    Color titleColor = const Color(0xFFBF360C);
+
+    if (riskState.isLoading) {
+      subtitleText = 'Detecting location...';
+      iconData = Icons.sync;
+      iconColor = AppColors.indigo;
+      bgColor = AppColors.indigo.withValues(alpha: 0.1);
+      borderColor = AppColors.indigo.withValues(alpha: 0.2);
+      titleColor = AppColors.indigo;
+    } else if (riskState.error != null) {
+      titleText = 'Location Unavailable';
+      subtitleText = riskState.error!;
+      iconData = Icons.location_disabled;
+      iconColor = Colors.grey.shade700;
+      bgColor = Colors.grey.shade200;
+      borderColor = Colors.grey.shade400;
+      titleColor = Colors.grey.shade800;
+    } else if (riskState.assessment != null) {
+      final assessment = riskState.assessment!;
+      final locality = riskState.locality ?? 'Unknown Location';
+      titleText = 'Risk Level: ${assessment.level.name.toUpperCase()}';
+      subtitleText = '$locality — ${assessment.message}';
+
+      switch (assessment.level) {
+        case RiskLevel.low:
+          bgColor = Colors.green.withValues(alpha: 0.15);
+          borderColor = Colors.green.withValues(alpha: 0.3);
+          iconColor = Colors.green.shade800;
+          iconData = Icons.verified_user_rounded;
+          titleColor = Colors.green.shade900;
+          break;
+        case RiskLevel.medium:
+          bgColor = Colors.orange.withValues(alpha: 0.15);
+          borderColor = Colors.orange.withValues(alpha: 0.3);
+          iconColor = Colors.orange.shade800;
+          iconData = Icons.warning_amber_rounded;
+          titleColor = Colors.orange.shade900;
+          break;
+        case RiskLevel.severe:
+          bgColor = AppColors.coral.withValues(alpha: 0.15);
+          borderColor = AppColors.coral.withValues(alpha: 0.3);
+          iconColor = const Color(0xFFE65100);
+          iconData = Icons.dangerous_rounded;
+          titleColor = const Color(0xFFBF360C);
+          break;
+      }
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.coral.withOpacity(0.15),
+        color: bgColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.coral.withOpacity(0.3)),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         children: [
@@ -249,14 +307,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.coral.withOpacity(0.2),
+              color: iconColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.warning_amber_rounded,
-              color: Color(0xFFE65100),
-              size: 24,
-            ),
+            child: Icon(iconData, color: iconColor, size: 24),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -264,22 +318,39 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Location Risk Level',
+                  titleText,
                   style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     fontSize: 14,
-                    color: const Color(0xFFBF360C),
+                    color: titleColor,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Fetching local data...',
-                  style: theme.textTheme.bodySmall,
+                  subtitleText,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: titleColor.withValues(alpha: 0.8),
+                    height: 1.3,
+                  ),
                 ),
               ],
             ),
           ),
-          Icon(Icons.chevron_right_rounded, color: theme.colorScheme.outline),
+          if (riskState.error != null)
+            IconButton(
+              onPressed: () =>
+                  ref.read(locationRiskProvider.notifier).fetchRiskData(),
+              icon: const Icon(Icons.refresh),
+              color: iconColor,
+              iconSize: 20,
+            )
+          else
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: titleColor.withValues(alpha: 0.5),
+              size: 16,
+            ),
         ],
       ),
     );
